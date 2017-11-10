@@ -1,0 +1,15 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+    "tslint:recommended"
+  ],
+  "rules": {
+    "semicolon": [true, "never"],
+    "object-literal-sort-keys": false,
+    "no-var-requires": false,
+    "no-console": false,
+    "max-classes-per-file": false,
+    "variable-name": [true, "ban-keywords", "check-format", "allow-camelCase", "allow-leading-underscore"]
+  },
+  "rulesDirectory": []
+}

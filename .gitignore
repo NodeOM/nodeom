@@ -1,0 +1,11 @@
+node_modules
+lib
+docs
+
+yarn-error.log
+
+.tags*
+
+v8-compile-*
+
+coverage

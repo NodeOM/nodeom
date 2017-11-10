@@ -1,0 +1,43 @@
+{
+  "name": "nodeom",
+  "version": "0.0.1",
+  "description": "Node Object Mapper",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "repository": "https://github.com/suttna/nodeorm",
+  "author": "Martin Fernandez <fmartin91@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest --config jest.json --forceExit --runInBand --verbose",
+    "build": "tsc",
+    "docs": "typedoc --out docs lib/index.d.ts --mode file --gaID XXX --hideGenerator --readme none --name 'Node Object Mapper' && touch docs/.nojekyll",
+    "watch": "tsc --watch",
+    "lint": "tslint 'src/**/*.ts' '__tests__/**/*.ts'",
+    "lint:fix": "tslint 'src/**/*.ts' '__tests__/**/*.ts' --fix",
+    "ci": "yarn lint && yarn build && yarn test",
+    "prepublish": "yarn build"
+  },
+  "keywords": [
+    "node",
+    "mapper",
+    "orm",
+    "object",
+    "sql"
+  ],
+  "dependencies": {
+    "@types/inflected": "^1.1.29",
+    "inflected": "^2.0.2",
+    "sequelize": "^4.0.0",
+    "subtractiontype.ts": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^21.1.5",
+    "@types/node": "^8.0.0",
+    "@types/sequelize": "^4.0.0",
+    "jest": "^20.0.0",
+    "sqlite": "^2.8.0",
+    "ts-jest": "^20.0.0",
+    "tslint": "^5.0.0",
+    "typescript": "2.6.1"
+  }
+}
