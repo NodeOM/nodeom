@@ -1,5 +1,5 @@
 import "jest"
-import { Association, AssociationType, AttributeSQL, GatewaySQL, RelationSQL, SchemaSQL } from "../src"
+import { GatewaySQL, RelationSQL, SchemaSQL } from "../src"
 
 const config = {
   dialect: "sqlite",
@@ -37,29 +37,26 @@ describe("RelationSQL", () => {
   beforeEach(async () => {
     gateway = new GatewaySQL(config)
 
-    const userSchema = new SchemaSQL<IUserAttributes>((name, type, meta) => new AttributeSQL(name, type, meta), "users")
-    const blogSchema = new SchemaSQL<IBlogAttributes>((name, type, meta) => new AttributeSQL(name, type, meta), "blogs")
-    const postSchema = new SchemaSQL<IPostAttributes>((name, type, meta) => new AttributeSQL(name, type, meta), "posts")
+    const userSchema = new SchemaSQL<IUserAttributes>("users")
+    const blogSchema = new SchemaSQL<IBlogAttributes>("blogs")
+    const postSchema = new SchemaSQL<IPostAttributes>("posts")
 
-    userSchema.addAttribute(new AttributeSQL<"id">("id", "INTEGER", { primaryKey: true }))
-    userSchema.addAttribute(new AttributeSQL<"email">("email", "STRING"))
-    userSchema.addAttribute(new AttributeSQL<"name">("name", "STRING"))
-    userSchema.addAttribute(new AttributeSQL<"age">("age", "INTEGER"))
-    userSchema.addAttribute(new AttributeSQL<"blogId">("blogId", "INTEGER"))
-    userSchema.addAssociation(new Association<"blog">("blog", { type: AssociationType.BelongsTo }))
-    userSchema.addAssociation(new Association<"posts">("posts", {
-      foreignKey: "authorId", type: AssociationType.HasMany,
-    }))
+    userSchema.attribute("id", "INTEGER", { primaryKey: true })
 
-    blogSchema.addAttribute(new AttributeSQL<"id">("id", "INTEGER", { primaryKey: true }))
-    blogSchema.addAttribute(new AttributeSQL<"name">("name", "STRING"))
-    blogSchema.addAssociation(new Association<"users">("users", { type: AssociationType.HasMany }))
+    userSchema.attribute("email", "STRING")
+    userSchema.attribute("name", "STRING")
+    userSchema.attribute("age", "INTEGER")
+    userSchema.attribute("blogId", "INTEGER")
+    userSchema.belongsTo("blog")
+    userSchema.hasMany("posts", { foreignKey: "authorId" })
 
-    postSchema.addAttribute(new AttributeSQL<"id">("id", "INTEGER", { primaryKey: true }))
-    postSchema.addAttribute(new AttributeSQL<"authorId">("authorId", "INTEGER"))
-    postSchema.addAssociation(new Association<"author">("author", {
-      relation: "users", type: AssociationType.BelongsTo,
-    }))
+    blogSchema.attribute("id", "INTEGER", { primaryKey: true })
+    blogSchema.attribute("name", "STRING")
+    blogSchema.hasMany("users")
+
+    postSchema.attribute("id", "INTEGER", { primaryKey: true })
+    postSchema.attribute("authorId", "INTEGER")
+    postSchema.belongsTo("author", { relationName: "users" })
 
     gateway.registerSchemas([userSchema, blogSchema, postSchema])
 
