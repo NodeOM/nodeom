@@ -1,5 +1,5 @@
+import { AssociationSQL } from "../association_sql"
 import { RelationSQL } from "../relation_sql"
-import { Association } from "../schema_sql"
 import { Join, NestedJoin } from "./reading"
 
 function isSimpleJoin(x: any): x is string {
@@ -50,7 +50,7 @@ export class JoinReading<T> {
     })
   }
 
-  private includeCondition(assoc: Association<any>) {
+  private includeCondition(assoc: AssociationSQL<any, any>) {
     return {
       required: true,
       model: assoc.targetRelation.dataset,

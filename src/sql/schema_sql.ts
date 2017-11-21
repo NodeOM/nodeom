@@ -1,76 +1,25 @@
-import { DataTypes } from "sequelize"
 import { Dissoc } from "subtractiontype.ts"
-import { Attribute, AttributeFactory, Schema } from "../core"
-import { RelationSQL } from "./relation_sql"
+import { Schema } from "../core"
+import { AssociationSQL } from "./association_sql"
+import * as Associations from "./associations"
+import { AttributeSQL, AttributeSQLType, IAttributeSQLMetadata } from "./attribute_sql"
 
-export enum AssociationType {
-  BelongsTo,
-  BelongsToMany,
-  HasOne,
-  HasMany,
-}
-
-export interface IAssociationMetadata {
-  relation?: string
-  foreignKey?: string
-  type: AssociationType
-}
-
-export type AttributeSQLType = keyof DataTypes
 export type SchemaRename<T, K extends keyof T, J extends string> = Dissoc<T, K> & { [j in J]: T[K] }
 
-export interface IAttributeSQLMetadata {
-  primaryKey?: boolean
-  allowNull?: boolean,
-  defaultValue?: any
-  field?: string
-}
-
-export class AttributeSQL<T> extends Attribute<T> {
-  public readonly type: AttributeSQLType
-  public readonly meta?: IAttributeSQLMetadata
-
-  constructor(
-    name: T,
-    type: AttributeSQLType,
-    meta?: IAttributeSQLMetadata,
-  ) {
-    super(name, type, meta)
-  }
-}
-
-export class Association<T> {
-  public readonly name: T
-  public readonly meta?: Partial<IAssociationMetadata>
-  // @ts-ignore
-  private target: RelationSQL<any>
-
-  constructor(
-    name: T,
-    meta: IAssociationMetadata,
-  ) {
-    this.name = name
-    this.meta = meta
-  }
-
-  public get targetRelation() {
-    return this.target
-  }
-
-  public setTargetRelation(targetRelation: RelationSQL<any>) {
-    this.target = targetRelation
-  }
-}
+const attributeFactory = (
+  name: any,
+  type: AttributeSQLType,
+  meta: IAttributeSQLMetadata,
+) => new AttributeSQL(name, type, meta)
 
 export class SchemaSQL<T> extends Schema<T> {
   public readonly attributes: Array<AttributeSQL<keyof T>>
-  public readonly associations: Array<Association<keyof T>> = []
+  public readonly associations: Array<AssociationSQL<keyof T, any>> = []
 
   constructor(
-    attributeFactory: AttributeFactory<T>,
     name: string,
     attributes?: Array<AttributeSQL<keyof T>>,
-    associations?: Array<Association<keyof T>>,
+    associations?: Array<AssociationSQL<keyof T, any>>,
   ) {
     super(attributeFactory, name, attributes)
 
@@ -79,7 +28,6 @@ export class SchemaSQL<T> extends Schema<T> {
 
   public clone<K>() {
     return new SchemaSQL<K>(
-      this.attributeFactory as any,
       this.name,
       this.attributes as any,
       this.associations as any,
@@ -98,7 +46,37 @@ export class SchemaSQL<T> extends Schema<T> {
     return this.attributes.find((x: AttributeSQL<keyof T>) => !!x.meta.primaryKey)
   }
 
-  public addAssociation(a: Association<keyof T>): this {
+  public attribute(name: keyof T, type: AttributeSQLType, meta?: IAttributeSQLMetadata) {
+    this.attributes.push(new AttributeSQL(name, type, meta))
+
+    return this
+  }
+
+  public hasMany(name: keyof T, meta?: Associations.IHasManyMetadata) {
+    this.associations.push(new Associations.HasMany(name, meta))
+
+    return this
+  }
+
+  public hasOne(name: keyof T, meta?: Associations.IHasOneMetadata) {
+    this.associations.push(new Associations.HasOne(name, meta))
+
+    return this
+  }
+
+  public belongsTo(name: keyof T, meta?: Associations.IBelongsToMetadata) {
+    this.associations.push(new Associations.BelongsTo(name, meta))
+
+    return this
+  }
+
+  public belongsToMany(name: keyof T, meta?: Associations.IBelongsToManyMetadata) {
+    this.associations.push(new Associations.BelongsToMany(name, meta))
+
+    return this
+  }
+
+  public addAssociation(a: AssociationSQL<keyof T, any>): this {
     this.associations.push(a)
 
     return this
