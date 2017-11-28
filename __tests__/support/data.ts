@@ -1,4 +1,4 @@
-import { GatewaySQL, RelationSQL, SchemaSQL } from "../../src/sql"
+import { GatewaySQL, SchemaSQL } from "../../src/sql"
 
 export interface IUserAttributes {
   id?: number
@@ -7,9 +7,17 @@ export interface IUserAttributes {
   age?: number
 }
 
+export interface IUserAssociations {
+  posts?: IPostAttributes
+}
+
 export interface IBlogAttributes {
   id: number
   name: string
+}
+
+export interface IBlogAssociations {
+  posts?: IPostAttributes
 }
 
 export interface IPostAttributes {
@@ -19,14 +27,19 @@ export interface IPostAttributes {
   blogId?: number
 }
 
-export interface ITestGateway {
+export interface ITestGatewayAttributes {
   users: IUserAttributes
   blogs: IBlogAttributes
   posts: IPostAttributes
 }
 
+export interface ITestGatewayAssociations {
+  users: IUserAssociations
+  blogs: IBlogAssociations
+}
+
 export async function createTestSQLGatewayWithSchemas() {
-  const gateway = new GatewaySQL<ITestGateway>({
+  const gateway = new GatewaySQL<ITestGatewayAttributes, ITestGatewayAssociations>({
     client: "sqlite3",
     connection: {
       filename: ":memory:",
@@ -37,22 +50,22 @@ export async function createTestSQLGatewayWithSchemas() {
 
   await migrateSQLSchema(gateway)
 
-  const userSchema = new SchemaSQL<IUserAttributes>("users")
+  const userSchema = new SchemaSQL<IUserAttributes, IUserAssociations>("users")
 
   userSchema.attribute("id", "INTEGER", { primaryKey: true })
   userSchema.attribute("email", "STRING")
   userSchema.attribute("name", "STRING")
   userSchema.attribute("age", "INTEGER")
 
-  gateway.registerSchemas([userSchema])
+  gateway.registerSchema(userSchema)
 
   await seedSQLDatabase(gateway)
 
   return gateway
 }
 
-async function seedSQLDatabase(gateway: GatewaySQL<ITestGateway>) {
-  const relation = gateway.relation("users") as RelationSQL<IUserAttributes>
+async function seedSQLDatabase(gateway: GatewaySQL<ITestGatewayAttributes, ITestGatewayAssociations>) {
+  const relation = gateway.relation("users")
 
   await relation.insert({ id: 1, email: "test1@test.com", name: "Test 1", age: 10 })
   await relation.insert({ id: 2, email: "test2@test.com", name: "Test 2", age: 20 })
@@ -60,7 +73,7 @@ async function seedSQLDatabase(gateway: GatewaySQL<ITestGateway>) {
   await relation.insert({ id: 4, email: "test4@test.com", name: "Test 4", age: 40 })
 }
 
-async function migrateSQLSchema(gateway: GatewaySQL<ITestGateway>) {
+async function migrateSQLSchema(gateway: GatewaySQL<ITestGatewayAttributes, ITestGatewayAssociations>) {
   const sb = gateway.connection.schema
 
   return sb.createTable("users", (table) => {

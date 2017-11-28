@@ -8,8 +8,8 @@ export abstract class Association<T extends string, K extends IAssociationMetada
   public readonly name: T
   public readonly meta?: K
 
-  protected source: Relation<any, any>
-  protected target: Relation<any, any>
+  protected source: Relation<any, any, any>
+  protected target: Relation<any, any, any>
 
   constructor(name: T, meta: K) {
     this.name = name

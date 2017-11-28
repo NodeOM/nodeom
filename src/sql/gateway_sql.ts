@@ -1,15 +1,17 @@
 import * as knex from "knex"
-import { Gateway } from "../core"
+import { Gateway, RelationCompoundIndex } from "../core"
+import { KnexDataset } from "./knex/dataset"
 import { RelationSQL } from "./relation_sql"
 import { SchemaSQL } from "./schema_sql"
 
-export type RelationSQLMap<R> = { [k in keyof R]: RelationSQL<R[k]> }
+export type RelationSQLMap<
+  AttrDef,
+  AssocDef
+> = { [i in RelationCompoundIndex<AttrDef, AssocDef>]: RelationSQL<AttrDef[i], AssocDef[i]> }
 
-export class GatewaySQL<R> extends Gateway<R> {
-  public relations = {} as RelationSQLMap<R>
-  // public relations: RelationSQL<any>[] = []
+export class GatewaySQL<AttrDef, AssocDef> extends Gateway<AttrDef, AssocDef, knex> {
+  public relations = {} as RelationSQLMap<AttrDef, AssocDef>
   public config: knex.Config
-  public connection: knex
 
   constructor(config: knex.Config) {
     super()
@@ -34,15 +36,17 @@ export class GatewaySQL<R> extends Gateway<R> {
     })
   }
 
-  public registerSchemas(schemas: Array<SchemaSQL<any>>): this {
-    this.relations = schemas.reduce((acc, x) => {
-      return Object.assign(acc, { [x.name]: new RelationSQL(x.name, this.connection.table(x.name), x) })
-    }, {} as RelationSQLMap<R>)
+  public registerSchema<J extends keyof RelationSQLMap<AttrDef, AssocDef>>(schema: SchemaSQL<any, any>): this {
+    this.relations[schema.name as J] = new RelationSQL(
+      schema.name,
+      new KnexDataset(this.connection.table(schema.name)),
+      schema as any,
+    )
 
     return this
   }
 
-  public relation<K extends keyof R>(name: K): RelationSQL<R[K]> {
+  public relation<J extends RelationCompoundIndex<AttrDef, AssocDef>>(name: J) {
     return this.relations[name]
   }
 }
