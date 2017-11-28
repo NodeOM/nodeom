@@ -1,15 +1,9 @@
 import { Dissoc } from "subtractiontype.ts"
-
-export class Attribute<T> {
-  constructor(
-    public readonly name: T,
-    public readonly type: any,
-    public readonly meta?: any,
-  ) { }
-}
+import { Attribute } from "./attribute"
 
 export type AttributeFactory<T> = (name: T, type: any, meta?: any) => Attribute<T>
 export type SchemaRename<T, K extends keyof T, J extends string> = Dissoc<T, K> & { [j in J]: T[K] }
+export type SchemaObject<T> = { [j in keyof T]: T[j] }
 
 export abstract class Schema<T> {
   public name: string
@@ -42,6 +36,10 @@ export abstract class Schema<T> {
     s.addAttribute(newAttr as any)
 
     return s
+  }
+
+  public primaryKey() {
+    return this.attributes.find((x) => !!x.meta.primaryKey)
   }
 
   public findAttribute(name: string) {

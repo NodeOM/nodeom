@@ -1,75 +1,75 @@
-import * as sequelize from "sequelize"
-import { Relation } from "../core"
-import { Join, Reading, Select, Where } from "./relation/reading"
-import { Writing } from "./relation/writing"
+import { QueryBuilder } from "knex"
+import { Mapper, Relation, SchemaObject } from "../core"
 import { SchemaSQL } from "./schema_sql"
 
-export type Dataset<T> = sequelize.Model<sequelize.Instance<T>, T>
+export type Where<T>      = Partial<SchemaObject<T>>
+export type Select<T>     = keyof T
+export type Join<T>       = NestedJoin<Partial<T>> | keyof T
+export type NestedJoin<T> = { [P in keyof T]: NestedJoin<Partial<T[P]>> | keyof T[P] }
 
-export class RelationSQL<T> extends Relation<T, Dataset<T>> {
+export interface ICloneOptions<T> {
+  dataset?: QueryBuilder
+  schema?: SchemaSQL<T>
+}
+
+export class RelationSQL<T> extends Relation<T, QueryBuilder> {
   public readonly schema: SchemaSQL<T>
-  private readonly reading: Reading<T>
 
-  constructor(
-    name: string,
-    dataset: Dataset<T>,
-    schema: SchemaSQL<T>,
-    reading?: Reading<T>,
-  ) {
-    super(name, dataset, schema)
+  public async insert(data: T): Promise<T> {
+    return this.clone()
+      .dataset
+      .insert(data)
+      .then((pk) => {
+        const primaryKeyAttribute = this.schema.primaryKey()
 
-    this.reading = reading || new Reading()
-  }
-
-  public insert(data: T): Promise<T> {
-    return new Writing(data).insert(this)
+        return Object.assign(data, { [primaryKeyAttribute.name]: pk[0] })
+      })
   }
 
   public select<K extends Select<T>>(...attributes: K[]) {
     return new RelationSQL(
       this.name,
-      this.dataset as any,
+      this.dataset,
       this.schema.project(...attributes) as SchemaSQL<Pick<T, K>>,
-      this.reading.clone() as any,
     )
   }
 
   public where(c: Where<T>): RelationSQL<T> {
-    return new RelationSQL(
-      this.name,
-      this.dataset,
-      this.schema,
-      this.reading.addCondition(c).clone(),
-    )
+    return this.clone({ dataset: this.dataset.where(c) })
   }
 
   public limit(l: number) {
-    return new RelationSQL(
-      this.name,
-      this.dataset,
-      this.schema,
-      this.reading.addLimit(l).clone(),
-    )
-  }
-
-  public join(j: Join<T>): RelationSQL<T> {
-    return new RelationSQL(
-      this.name,
-      this.dataset,
-      this.schema,
-      this.reading.addJoin(j).clone(),
-    )
+    return this.clone({ dataset: this.dataset.limit(l) })
   }
 
   public async byPk(pk: any): Promise<T> {
-    return this.reading.byPk(this, pk)
+    const primaryKey = this.schema.primaryKey()
+
+    return this
+      .where({ [primaryKey.columnName]: pk } as SchemaObject<T>)
+      .first()
   }
 
   public async first(): Promise<T> {
-    return this.reading.first(this)
+    return this.dataset
+      .first()
+      .select(this.schema.attributes.map((x) => x.columnName))
+      .then((r) => new Mapper(this.schema).single(r))
   }
 
   public async toArray(): Promise<T[]> {
-    return this.reading.toArray(this)
+    return this.dataset
+      .select(this.schema.attributes.map((x) => x.columnName))
+      .then((r) => {
+        console.info(r)
+        return new Mapper(this.schema).many(r)
+      })
+  }
+
+  protected clone<K>(options?: ICloneOptions<K>): RelationSQL<K> {
+    const dataset = options && options.dataset ? options.dataset : this.dataset
+    const schema  = options && options.schema ? options.schema : this.schema
+
+    return new RelationSQL(this.name, dataset.clone(), schema as any)
   }
 }

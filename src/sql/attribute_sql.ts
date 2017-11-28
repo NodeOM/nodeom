@@ -1,14 +1,10 @@
-import { DataTypes } from "sequelize"
-import { Attribute } from "../core"
+import { Attribute, IAttributeMeta } from "../core"
 
-export type AttributeSQLType = keyof DataTypes
+export type AttributeSQLType = any
 
-export interface IAttributeSQLMetadata {
-  primaryKey?: boolean
-  allowNull?: boolean,
-  defaultValue?: any
-  field?: string
-}
+// tslint:disable:no-empty-interface
+export interface IAttributeSQLMetadata extends IAttributeMeta { }
+// tslint:enable:no-empty-interface
 
 export class AttributeSQL<T> extends Attribute<T> {
   public readonly type: AttributeSQLType
@@ -20,5 +16,9 @@ export class AttributeSQL<T> extends Attribute<T> {
     meta?: IAttributeSQLMetadata,
   ) {
     super(name, type, meta)
+  }
+
+  get columnName() {
+    return this.name
   }
 }

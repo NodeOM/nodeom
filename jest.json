@@ -13,6 +13,7 @@
   ],
   "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|js)$",
   "testPathIgnorePatterns": [
-    "/node_modules/"
+    "/node_modules/",
+    "__tests__/support"
   ]
 }

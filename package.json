@@ -15,7 +15,8 @@
     "lint": "tslint 'src/**/*.ts' '__tests__/**/*.ts'",
     "lint:fix": "tslint 'src/**/*.ts' '__tests__/**/*.ts' --fix",
     "ci": "yarn lint && yarn build && yarn test",
-    "prepublish": "yarn build"
+    "prepublish": "yarn build",
+    "posttest": "codecov -f coverage/*.json"
   },
   "keywords": [
     "node",
@@ -25,15 +26,16 @@
     "sql"
   ],
   "dependencies": {
-    "@types/inflected": "^1.1.29",
     "inflected": "^2.0.2",
-    "sequelize": "^4.0.0",
+    "knex": "^0.14.2",
     "subtractiontype.ts": "^1.0.0"
   },
   "devDependencies": {
+    "@types/inflected": "^1.1.29",
     "@types/jest": "^21.1.5",
+    "@types/knex": "^0.0.65",
     "@types/node": "^8.0.0",
-    "@types/sequelize": "^4.0.0",
+    "codecov": "^3.0.0",
     "jest": "^20.0.0",
     "sqlite": "^2.8.0",
     "ts-jest": "^20.0.0",
