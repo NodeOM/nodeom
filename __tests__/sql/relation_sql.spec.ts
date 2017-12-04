@@ -1,13 +1,13 @@
 import "jest"
 import { GatewaySQL, RelationSQL } from "../../src"
-import { createTestSQLGatewayWithSchemas, ITestGateway, IUserAttributes } from "../support"
+import * as support from "../support"
 
 describe("RelationSQL", () => {
-  let gateway: GatewaySQL<ITestGateway>
-  let relation: RelationSQL<IUserAttributes>
+  let gateway: GatewaySQL<support.ITestGatewayAttributes, support.ITestGatewayAssociations>
+  let relation: RelationSQL<support.IUserAttributes, support.IUserAssociations>
 
   beforeEach(async () => {
-    gateway = await createTestSQLGatewayWithSchemas()
+    gateway = await support.createTestSQLGatewayWithSchemas()
     relation = gateway.relation("users")
   })
 

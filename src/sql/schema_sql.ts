@@ -1,8 +1,5 @@
-import { Dissoc } from "subtractiontype.ts"
-import { Schema } from "../core"
+import { Schema, SchemaRename } from "../core"
 import { AttributeSQL, AttributeSQLType, IAttributeSQLMetadata } from "./attribute_sql"
-
-export type SchemaRename<T, K extends keyof T, J extends string> = Dissoc<T, K> & { [j in J]: T[K] }
 
 const attributeFactory = (
   name: any,
@@ -10,30 +7,33 @@ const attributeFactory = (
   meta: IAttributeSQLMetadata,
 ) => new AttributeSQL(name, type, meta)
 
-export class SchemaSQL<T> extends Schema<T> {
-  public readonly attributes: Array<AttributeSQL<keyof T>>
+export class SchemaSQL<Attr, Assoc> extends Schema<Attr, Assoc> {
+  public readonly attributes: Array<AttributeSQL<keyof Attr>>
 
-  constructor(name: string, attributes?: Array<AttributeSQL<keyof T>>) {
+  constructor(name: string, attributes?: Array<AttributeSQL<keyof Attr>>) {
     super(attributeFactory, name, attributes)
   }
 
-  public clone<K>() {
-    return new SchemaSQL<K>(this.name, this.attributes as any)
+  public clone<NewAttr, NewAssoc>() {
+    return new SchemaSQL<NewAttr, NewAssoc>(this.name, this.attributes as any)
   }
 
-  public project<K extends keyof T>(...keys: K[]): SchemaSQL<Pick<T, K>> {
-    return super.project(...keys) as SchemaSQL<Pick<T, K>>
+  public project<K extends keyof Attr>(...keys: K[]): SchemaSQL<Pick<Attr, K>, Assoc> {
+    return super.project(...keys) as SchemaSQL<Pick<Attr, K>, Assoc>
   }
 
-  public rename<K extends keyof T, J extends string>(currentName: K, newName: J): SchemaSQL<SchemaRename<T, K, J>> {
-    return super.rename(currentName, newName) as SchemaSQL<SchemaRename<T, K, J>>
+  public rename<
+    K extends keyof Attr,
+    J extends string
+  >(currentName: K, newName: J): SchemaSQL<SchemaRename<Attr, K, J>, Assoc> {
+    return super.rename(currentName, newName) as SchemaSQL<SchemaRename<Attr, K, J>, Assoc>
   }
 
   public primaryKey() {
-    return super.primaryKey() as AttributeSQL<keyof T>
+    return super.primaryKey() as AttributeSQL<keyof Attr>
   }
 
-  public attribute(name: keyof T, type: AttributeSQLType, meta?: IAttributeSQLMetadata) {
+  public attribute(name: keyof Attr, type: AttributeSQLType, meta?: IAttributeSQLMetadata) {
     this.addAttribute(new AttributeSQL(name, type, meta))
 
     return this

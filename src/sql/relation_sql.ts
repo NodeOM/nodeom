@@ -1,75 +1,57 @@
-import { QueryBuilder } from "knex"
-import { Mapper, Relation, SchemaObject } from "../core"
+import { Relation, SchemaObject } from "../core"
+import { KnexDataset, Select, Where } from "./knex/dataset"
+import { KnexWritter } from "./knex/writer"
 import { SchemaSQL } from "./schema_sql"
 
-export type Where<T>      = Partial<SchemaObject<T>>
-export type Select<T>     = keyof T
-export type Join<T>       = NestedJoin<Partial<T>> | keyof T
-export type NestedJoin<T> = { [P in keyof T]: NestedJoin<Partial<T[P]>> | keyof T[P] }
+export class RelationSQL<Attr, Assoc> extends Relation<Attr, Assoc, KnexDataset<Attr, Assoc>> {
+  public readonly schema: SchemaSQL<Attr, Assoc>
 
-export interface ICloneOptions<T> {
-  dataset?: QueryBuilder
-  schema?: SchemaSQL<T>
-}
-
-export class RelationSQL<T> extends Relation<T, QueryBuilder> {
-  public readonly schema: SchemaSQL<T>
-
-  public async insert(data: T): Promise<T> {
-    return this.clone()
-      .dataset
-      .insert(data)
-      .then((pk) => {
-        const primaryKeyAttribute = this.schema.primaryKey()
-
-        return Object.assign(data, { [primaryKeyAttribute.name]: pk[0] })
-      })
+  public async insert(data: Attr) {
+    return new KnexWritter(this.dataset.rawDataset, this.schema).insert(data)
   }
 
-  public select<K extends Select<T>>(...attributes: K[]) {
-    return new RelationSQL(
-      this.name,
-      this.dataset,
-      this.schema.project(...attributes) as SchemaSQL<Pick<T, K>>,
+  public select<K extends Select<Attr>>(...attributes: K[]) {
+    const projectedSchema = this.schema.project(...attributes) as SchemaSQL<Pick<Attr, K>, Assoc>
+
+    return this
+      .cloneWithDataset(this.dataset.select(attributes as any) as any)
+      .cloneWithSchema(projectedSchema)
+  }
+
+  public where(c: Where<Attr>) {
+    return this.cloneWithDataset(
+      this.dataset.where(c),
     )
   }
 
-  public where(c: Where<T>): RelationSQL<T> {
-    return this.clone({ dataset: this.dataset.where(c) })
-  }
-
   public limit(l: number) {
-    return this.clone({ dataset: this.dataset.limit(l) })
+    return this.cloneWithDataset(
+      this.dataset.limit(l),
+    )
   }
 
-  public async byPk(pk: any): Promise<T> {
+  public async byPk(pk: any) {
     const primaryKey = this.schema.primaryKey()
 
     return this
-      .where({ [primaryKey.columnName]: pk } as SchemaObject<T>)
-      .first()
+      .where({ [primaryKey.columnName]: pk } as SchemaObject<Attr>)
+      .call()
+      .one()
   }
 
-  public async first(): Promise<T> {
-    return this.dataset
-      .first()
-      .select(this.schema.attributes.map((x) => x.columnName))
-      .then((r) => new Mapper(this.schema).single(r))
+  public async first(): Promise<Attr & Assoc> {
+    return this.call().first()
   }
 
-  public async toArray(): Promise<T[]> {
-    return this.dataset
-      .select(this.schema.attributes.map((x) => x.columnName))
-      .then((r) => {
-        console.info(r)
-        return new Mapper(this.schema).many(r)
-      })
+  public async toArray(): Promise<Attr[]> {
+    return this.call().toArray()
   }
 
-  protected clone<K>(options?: ICloneOptions<K>): RelationSQL<K> {
-    const dataset = options && options.dataset ? options.dataset : this.dataset
-    const schema  = options && options.schema ? options.schema : this.schema
+  protected cloneWithDataset(dataset: KnexDataset<Attr, Assoc>): RelationSQL<Attr, Assoc> {
+    return new RelationSQL(this.name, dataset.clone<Attr, Assoc>(), this.schema)
+  }
 
-    return new RelationSQL(this.name, dataset.clone(), schema as any)
+  protected cloneWithSchema<NewAttr, NewAssoc>(schema: SchemaSQL<NewAttr, NewAssoc>): RelationSQL<NewAttr, NewAssoc> {
+    return new RelationSQL(this.name, this.dataset.clone(), schema)
   }
 }
