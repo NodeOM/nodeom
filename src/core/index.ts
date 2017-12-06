@@ -1,5 +1,7 @@
 export { Gateway, RelationMap, RelationCompoundIndex } from "./gateway"
-export { Relation, IDataset } from "./relation"
+export { Relation, Dataset } from "./relation"
 export { Mapper } from "./mapper"
 export { Attribute, IAttributeMeta } from "./attribute"
 export { Schema, SchemaObject, AttributeFactory, SchemaRename } from "./schema"
+export { RelationMemory } from "./memory/relation_memory"
+export { DatasetMemory } from "./memory/dataset_memory"

@@ -8,7 +8,8 @@
   "author": "Martin Fernandez <fmartin91@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "test": "jest --config jest.json --forceExit --runInBand --verbose",
+    "_test_": "jest --config jest.json --forceExit --runInBand --verbose",
+    "test": "yarn _test_",
     "build": "tsc",
     "docs": "typedoc --out docs lib/index.d.ts --mode file --gaID XXX --hideGenerator --readme none --name 'Node Object Mapper' && touch docs/.nojekyll",
     "watch": "tsc --watch",

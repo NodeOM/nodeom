@@ -1,22 +1,20 @@
 import { QueryBuilder } from "knex"
-import { IDataset, SchemaObject } from "../../core"
+import { Dataset, SchemaObject } from "../../core"
 
 export type Where<Attr>  = Partial<SchemaObject<Attr>>
 export type Select<Attr> = keyof Attr
 
-export class KnexDataset<Attr, Assoc> implements IDataset<Attr, Assoc> {
+export class KnexDataset<Attr, Assoc> extends Dataset<Attr> {
   public rawDataset: QueryBuilder
 
   constructor(rawDataset: QueryBuilder) {
+    super()
+
     this.rawDataset = rawDataset
   }
 
   public async toArray(): Promise<Array<Attr & Assoc>> {
     return this.rawDataset
-  }
-
-  public async first(): Promise<Attr & Assoc> {
-    return this.rawDataset.first()
   }
 
   public select<K extends Select<Attr>>(columns: K[]) {
