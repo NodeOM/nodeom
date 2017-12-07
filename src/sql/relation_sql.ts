@@ -1,5 +1,5 @@
 import { Relation, SchemaObject } from "../core"
-import { KnexDataset, Select, Where } from "./knex/dataset"
+import { KnexDataset, Select, Where } from "./knex/dataset_knex"
 import { KnexWritter } from "./knex/writer"
 import { SchemaSQL } from "./schema_sql"
 
@@ -36,15 +36,15 @@ export class RelationSQL<Attr, Assoc> extends Relation<Attr, Assoc, KnexDataset<
     return this
       .where({ [primaryKey.columnName]: pk } as SchemaObject<Attr>)
       .call()
-      .one()
+      .then((x) => x.one())
   }
 
-  public async first(): Promise<Attr & Assoc> {
-    return this.call().first()
+  public async first(): Promise<Attr> {
+    return this.limit(1).call().then((x) => x.first())
   }
 
   public async toArray(): Promise<Attr[]> {
-    return this.call().toArray()
+    return this.call().then((x) => x.toArray())
   }
 
   protected cloneWithDataset(dataset: KnexDataset<Attr, Assoc>): RelationSQL<Attr, Assoc> {

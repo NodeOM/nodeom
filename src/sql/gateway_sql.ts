@@ -1,6 +1,6 @@
 import * as knex from "knex"
 import { Gateway, RelationCompoundIndex } from "../core"
-import { KnexDataset } from "./knex/dataset"
+import { KnexDataset } from "./knex/dataset_knex"
 import { RelationSQL } from "./relation_sql"
 import { SchemaSQL } from "./schema_sql"
 
@@ -23,7 +23,7 @@ export class GatewaySQL<AttrDef, AssocDef> extends Gateway<AttrDef, AssocDef, kn
     return new Promise((resolve) => {
       this.connection = knex({
         ...this.config,
-        debug: true,
+        debug: false,
         pool: {
           ...this.config.pool,
           afterCreate: async (connection: any, done: (error: Error, connection: any) => void) => {

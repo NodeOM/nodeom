@@ -1,30 +1,27 @@
-import { Mapper } from "../mapper"
-import { IDataset, Relation } from "../relation"
+import { Relation } from "../relation"
 
-export class Loaded<Attr, Assoc, J extends IDataset<Attr, Assoc>, K extends Relation<Attr, Assoc, J>> {
-  private relation: K
-  private mapper: Mapper<Attr, Assoc>
+export class Loaded<Attr, K extends Relation<Attr, {}, any>> {
+  private source: K
+  private collection: Attr[]
 
-  constructor(relation: K, mapper: Mapper<Attr, Assoc>) {
-    this.relation = relation
-    this.mapper   = mapper
+  constructor(source: K, collection: Attr[]) {
+    this.source = source
+    this.collection = collection
   }
 
   public async one() {
     return this.first()
   }
 
-  public async toArray() {
-    return this.relation
-      .dataset
-      .toArray()
-      .then((x) => this.mapper.many(x))
+  public toArray() {
+    return this.mapper().many(this.collection)
   }
 
   public async first() {
-    return this.relation
-      .dataset
-      .first()
-      .then((x) => this.mapper.single(x))
+    return this.mapper().single(this.collection[0])
+  }
+
+  private mapper() {
+    return this.source.mapper()
   }
 }

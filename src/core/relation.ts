@@ -4,12 +4,15 @@ import { Schema } from "./schema"
 
 export type Select<S> = keyof S
 
-export interface IDataset<Attr, Assoc> {
-  toArray(): Promise<Array<Attr & Assoc>>
-  first(): Promise<Attr & Assoc>
+export abstract class Dataset<Attr> {
+  public abstract toArray(): Promise<Attr[]>
+
+  public async size() {
+    return this.toArray().then((x) => x.length)
+  }
 }
 
-export class Relation<Attr, Assoc, K extends IDataset<Attr, Assoc>> {
+export class Relation<Attr, Assoc, K extends Dataset<Attr>> {
   public readonly name: string
   public readonly schema: Schema<Attr, Assoc>
   public readonly dataset: K
@@ -20,11 +23,13 @@ export class Relation<Attr, Assoc, K extends IDataset<Attr, Assoc>> {
     this.schema = schema
   }
 
-  public call(): Loaded<Attr, Assoc, K, Relation<Attr, Assoc, K>> {
-    return new Loaded(this, this.mapper())
+  public async call(): Promise<Loaded<Attr, Relation<Attr, {}, any>>> {
+    const collection = await this.dataset.toArray()
+
+    return new Loaded(this as any, collection)
   }
 
-  protected mapper() {
+  public mapper() {
     return new Mapper(this.schema)
   }
 }
